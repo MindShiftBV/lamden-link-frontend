@@ -2,11 +2,13 @@ import { writable, derived } from "svelte/store";
 import * as networks from '../js/networks'
 
 export const selectedNetwork = writable("mainnet")
+export const tabHidden = writable(false);
+
+export const maintenance_on = writable(false);
+export const maintenance_unlocked = writable(false)
 
 export const swapInfo = writable({})
 export const swapHistory = writable([])
-
-
 
 export const selectedToken = derived(swapInfo, ($swapInfo) => $swapInfo.token)
 
@@ -14,6 +16,7 @@ export const networkInfo = derived(selectedNetwork, ($selectedNetwork) => networ
 export const lamdenNetwork = derived(networkInfo, ($networkInfo) => $networkInfo.lamden)
 export const ethereumNetwork = derived(networkInfo, ($networkInfo) => $networkInfo.ethereum)
 export const binanceNetwork = derived(networkInfo, ($networkInfo) => $networkInfo.binance)
+export const Bridges = derived(networkInfo, ($networkInfo) => $networkInfo.bridges)
 
 export const getNetworkStore = (networkName) => {
     const networkMap = {

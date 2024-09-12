@@ -6,6 +6,9 @@
     import LogoBinance from '../Logos/LogoBinance.svelte'
     import LogoLamden from '../Logos/LogoLamden.svelte'
 
+    // Icons
+    import IconSquareCheck from '../SVG/SquareCheck.svelte'
+
     export let stepInfo
     export let complete
     export let current
@@ -22,16 +25,18 @@
 
 <style>
     .step-container{
+        position: relative;
         box-sizing: border-box;
         padding: 1rem 1rem 2rem;
         margin: 1rem 0;
         width: 100%;
         opacity: 50%;
-        border: 2px solid var(--color-gray-2);
+        border: 0.1em solid var(--color-gray-2);
         border-radius: 10px;
     }
     .logo-container{
         margin-right: 1rem;
+        padding-top: 0.25em;
     }
     .step-container.metamask{
         opacity: 100%;
@@ -40,12 +45,11 @@
     }
     .step-container.current{
         opacity: 100%;
-        border: 2px solid var(--primary-color);
+        border: 0.1em solid var(--primary-color);
         background: var(--primary-color-dark);
     }
     .step-container.complete{
         opacity: 100%;
-        border: 1px solid var(--success-color);
         background: var(--success-color-darker);
     }
 
@@ -60,9 +64,6 @@
     p.step-desc{
         color: var(--font-primary-dim)
     }
-    .buttons{
-        text-align: end;
-    }
     .step-num{
         opacity: 50%;
         font-size: 50px;
@@ -74,6 +75,13 @@
     .step-num.complete{
         opacity: 100%;
         color: var(--success-color);
+    }
+    .complete-icon{
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        width: 50px;
+
     }
     @media screen and (min-width: 430px) {
 
@@ -92,12 +100,23 @@
             </div>
             <div class="width-100">
                 <p class="step-name">{stepInfo.name}</p>
-                <p class="step-desc">{stepInfo.desc}</p>
+                {#if Array.isArray(stepInfo.desc)}
+                    {#each stepInfo.desc as desc}
+                        <p class="step-desc">{desc}</p>
+                    {/each}
+                {:else}
+                    <p class="step-desc">{stepInfo.desc}</p>
+                {/if}
                 {#if stepInfo.component}
                     <svelte:component this={stepInfo.component} {current} {complete} {stepInfo}/>
                 {/if}
             </div>
         </div>
+        {#if complete}
+            <div class="complete-icon">
+                <IconSquareCheck />
+            </div>
+        {/if}
     </div>
 </div>
 

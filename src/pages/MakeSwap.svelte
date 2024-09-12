@@ -10,7 +10,7 @@
 
     // Misc
     import * as networks from '../js/networks'
-    import { selectedNetwork, swapInfo } from '../stores/globalStores';
+    import { selectedNetwork, swapInfo, maintenance_unlocked } from '../stores/globalStores'
     import { getLastSwap, clearCurrentSwap } from '../js/localstorage-utils';
 
     export let testnet
@@ -27,9 +27,10 @@
     })
 
     onMount(() => {
-        if (testnet) selectedNetwork.set('testnet')
+        if (testnet) set_testnet()
 
         let lastSwapInfo = getLastSwap()
+        if (!lastSwapInfo) lastSwapInfo = {}
         if (!lastSwapInfo.to && !lastSwapInfo.from && !lastSwapInfo.token){
             // Do nothing
         }else{
@@ -40,21 +41,29 @@
 
 
     function getFromNetworks(){
-        return Object.keys(networks[$selectedNetwork])
+        return Object.keys(networks[$selectedNetwork]).filter(k => k !== "bridges" && k !== "ethereum" && k !== "binance")
     }
 
     function getToNetworks(){
-        return networks[$selectedNetwork][$swapInfo.from].interop
+        return networks[$selectedNetwork][$swapInfo.from].interop.filter(k => k !== "ethereum")
     }
 
     function getSupportedTokens(){
-        return networks[$selectedNetwork][$swapInfo.from].tokens
+        return networks[$selectedNetwork][$swapInfo.from].tokens[$swapInfo.to]
     }
 
     function setStep(step){
         currentStep = step
     }
 
+    function set_testnet(){
+        selectedNetwork.set('testnet')
+    }
+
+    function set_mainnet(){
+        selectedNetwork.set('mainnet')
+    }
+    
     function startOver(){
         clearCurrentSwap()
         setStep(0)
@@ -83,6 +92,14 @@
 </style>
 
 <div class="page-container">
+    {#if $maintenance_unlocked && $selectedNetwork === 'mainnet'}
+        <button on:click={set_testnet}>Testnet</button>
+    {/if}
+
+    {#if $maintenance_unlocked && $selectedNetwork === 'testnet'}
+        <button on:click={set_mainnet}>Mainnet</button>
+    {/if}
+
     <div class="flex col">
         <svelte:component this={steps[currentStep]} />
     </div>

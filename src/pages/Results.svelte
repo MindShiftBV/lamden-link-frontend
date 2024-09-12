@@ -38,6 +38,15 @@
         border-style: none;
         height: 1px;
     }
+    .add-token-link{
+        text-align: center;
+        display: block;
+        margin: 2rem 0 0;
+    }
+    a:hover{
+        color: var(--color-white);
+        text-decoration: underline;
+    }
 
 </style>
 
@@ -56,10 +65,13 @@
         <div class="flex row">
             <TokenLogo token={$lastSwap.token} clickable={false} />
             <p>
-                <strong>{`${stringToFixed($lastSwap.tokenAmount, 8)} ${$lastSwap.token.symbol}`}</strong> successfully sent to the {$lastSwap.toNetwork.networkName}
+                <strong>{`${stringToFixed($lastSwap.tokenAmount, 6)} ${$lastSwap.token.symbol}`}</strong> successfully sent to the {$lastSwap.toNetwork.networkName}
             </p>
         </div>
         <p class="date text-primary-dim">sent on {new Date($lastSwap.completeDate).toLocaleString()}</p>
+
+        <a class="add-token-link" href="https://youtu.be/Bv_RT0-j8zw" target="_blank" rel="noopener noreferrer">Learn to add tokens to the Lamden Wallet</a>
+
 
         <div class="buttons flex row align-center just-center">
             <button on:click={handleGoHome}>Lamden Link Home</button>

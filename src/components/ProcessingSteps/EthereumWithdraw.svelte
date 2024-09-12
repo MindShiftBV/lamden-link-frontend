@@ -15,9 +15,13 @@
 
     export let current
 
+    let clicked = false
+
     $: swapComplete = $swapInfo.complete || false
 
     function withdrawTokens(){
+        withdrawTxStatus.set({})
+        clicked = true
         if ($swapInfo.proofData) sendProof()
         else continueBurn(withdrawTxStatus, handleWithdrawResult)
     }
@@ -44,10 +48,11 @@
                 return curr
             })
             saveSwap()
+            done()
         }else{
             withdrawTxStatus.set({errors: ['Transactoin Failed. Check blockexplorer for details.']})
         }
-    }   
+    } 
 
     function handleNextStep(){
         done()
@@ -67,7 +72,9 @@
     <ul>
         {#if swapComplete}
             <li class:yes={swapComplete}>
-                Ethereum withdraw complete!
+                <span>
+                    Token withdraw complete!
+                </span>
             </li>
         {/if}
     </ul>
@@ -78,7 +85,7 @@
 
     {#if !$withdrawTxStatus.loading }
         {#if !swapComplete}
-                <button on:click={withdrawTokens}>Withdraw Tokens</button>
+                <button on:click={withdrawTokens}>{clicked ? "Try Again" : "Withdraw Tokens"}</button>
         {/if }
 
         {#if swapComplete}

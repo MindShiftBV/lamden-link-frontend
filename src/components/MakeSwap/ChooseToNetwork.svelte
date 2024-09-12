@@ -8,20 +8,22 @@
     // Misc
     import { swapInfo } from '../../stores/globalStores'
 
-    const { fromNetworks, toNetworks, setStep } = getContext('current_swap')
+    const { toNetworks, setStep } = getContext('current_swap')
 
     function handleNetworkSelected(e) {
-        let interop = toNetworks(e.detail)
         swapInfo.update(curr => {
-            curr.from = e.detail
-            if (interop.length === 0) curr.to = interop[0]
+            curr.to = e.detail
             return curr
         })
-        if (interop.length > 1){
-            setStep(1)
-        }else{
-            setStep(2)
-        }
+        setStep(2)
+    }
+
+    function back(){
+        swapInfo.update(curr => {
+            delete curr.to
+            return curr
+        })
+        setStep(0)
     }
 
 </script>
@@ -30,6 +32,9 @@
     h2{
         text-align: center;
     }
+    button{
+        margin: 2em auto;
+    }
 
     @media screen and (min-width: 430px) {
 
@@ -37,11 +42,13 @@
 </style>
 
 <div class="flex col just-center" >
-    <h2>Which Blockchain are are your tokens currently on?</h2>
+    <h2>Which Blockchain are you sending your tokens to?</h2>
 
     <div class="flex row align-center just-center networks">
-        {#each fromNetworks() as fn}
+        {#each toNetworks() as fn}
             <NetworkLogo networkName={fn} on:selected={handleNetworkSelected}/>
         {/each}
     </div>
 </div>
+
+<button class="secondary" on:click={back}>Back</button>

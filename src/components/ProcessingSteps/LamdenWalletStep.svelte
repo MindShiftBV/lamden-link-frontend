@@ -6,11 +6,11 @@
     import LamdenTokenInput from '../ProcessingSteps/LamdenTokenInput.svelte'
 
     // Misc
-    import BN from 'bignumber.js'
     import WalletController from 'lamden_wallet_controller';
     import { selectedNetwork, lamdenNetwork, swapInfo } from '../../stores/globalStores.js';
-    import { lamdenWalletInfo, lamden_vk, lwc, hasNetworkApproval, lamdenTokenBalance } from '../../stores/lamdenStores.js';
+    import { lamdenWalletInfo, lamden_vk, lwc, hasNetworkApproval, lamdenTokenBalance, isTrackedAddress } from '../../stores/lamdenStores.js';
     import { checkLamdenTokenApproval } from '../../js/lamden-utils'
+    import { BN } from '../../js/global-utils'
 
     export let current
     export let complete
@@ -23,31 +23,39 @@
     $: tokenFromMe = $swapInfo.from === "lamden"
     $: tokensToSend = $swapInfo.tokenAmount || new BN(0)
     $: hasEnoughTokens = tokensToSend.isGreaterThan(0) && $lamdenTokenBalance.isGreaterThanOrEqualTo(tokensToSend)
+    $: resuming = $swapInfo.burnHash || $swapInfo.depositHash || false
 
     const { nextStep } = getContext('process_swap')
 
 	onMount(() => {
         lwc.set(new WalletController(getApprovalRequest()))
-
+        
         $lwc.events.on('newInfo', handleWalletInfo)
 
 		return () => {
 			$lwc.events.removeListener(handleWalletInfo)
 		}
     })
+
     function checkIfWalletIsInstalled(){
 		$lwc.walletIsInstalled()
     }
 
     function getApprovalRequest(){
-        return $lamdenNetwork.clearingHouse
+        return $lamdenNetwork.walletConnection
     }
 
 	const handleWalletInfo = (info) => {
-        if (info.approvals){
-            if (Object.keys(info.approvals).includes($selectedNetwork)){
-                hasNetworkApproval.set({approved: true})
-                lamden_vk.set($lwc.walletAddress)
+        const approvalRequest = getApprovalRequest()
+        const { networkName } = approvalRequest
+
+        if (info.approvals && networkName){
+            const net_name = info.approvals[networkName]
+            if (net_name){
+                if (Object.keys(net_name).includes($selectedNetwork)){
+                    hasNetworkApproval.set({approved: true})
+                    lamden_vk.set($lwc.walletAddress)
+                }
             }
         }
         if (!info.errors){
@@ -59,14 +67,26 @@
     const sendLamdenApproval = () => {
         $lwc.sendConnection()
     }
+
     async function handleNextStep(){
         swapInfo.update(curr => {
             curr.lamden_address = $lamden_vk
             return curr
         })
+        getAllowanceAndNext()
+    }
+
+    async function getAllowanceAndNext(){
         if (tokenFromMe) await checkLamdenTokenApproval()
         nextStep()
     }
+
+    function handleResumeSwap(){
+        let agree = confirm("If you have not started swap yet click CANCEL.\n\nClick OK if you have a burn or depost hash you need to redeem.")
+        if (!agree) return
+        handleNextStep()
+    }
+
 </script>
 
 
@@ -89,6 +109,13 @@
     a:visited{
         color: var(--font-primary);
     }
+    button{
+        min-width: fit-content;
+        margin-left: 1rem;
+    }
+    ul{
+        margin: 2rem 0;
+    }
     @media screen and (min-width: 430px) {
 
     }
@@ -96,53 +123,54 @@
 
 {#if current || complete}
     <ul>
-        <li class:yes={installed}>
-            {#if !installed}
-                {#if notAttempted}
-                    Not Connected
+        <li class:yes={installed}> 
+            <span>
+                {#if !installed}
+                    {#if notAttempted}
+                        Not Connected
+                    {:else}
+                        Not Installed
+                    {/if}
                 {:else}
-                    Not Installed
+                    Installed
                 {/if}
-            {:else}
-                Installed
-            {/if}
+            </span>
         </li>
 
         {#if installed}
             <li class:yes={!locked}>
-                {#if !locked}
-                    Wallet Unlocked 
-                {:else}
-                    Wallet is Locked
-                {/if}
+                <span>
+                    {#if !locked}
+                        Wallet Unlocked 
+                    {:else}
+                        Wallet is Locked
+                    {/if}
+                </span>
             </li>
         {/if}
     
         {#if installed}
             <li class:yes={connected}>
-                {#if !connected}
-                    Lamden Link Not Connected
-                {:else}
-                    Connected to Lamden Link
-                {/if}
+                <span>
+                    {#if !connected}
+                        Lamden Link Not Connected
+                    {:else}
+                        Connected to Lamden Link
+                    {/if}
+                </span>
             </li>
         {/if}
-
-        {#if $lamden_vk}
-            <li class="no-bullet">
-                <LamdenBalance />
-            </li>
-        {/if}
-
-        {#if $lamden_vk && tokenFromMe}
-            {#if !depositComplete}
-                <li class="no-bullet">
-                    <LamdenTokenInput {complete}/>
-                </li>
-            {/if}
-        {/if}
-
     </ul>
+
+    {#if $lamden_vk}
+            <LamdenBalance />
+    {/if}
+
+    {#if $lamden_vk && tokenFromMe}
+        {#if !depositComplete}
+                <LamdenTokenInput {complete}/>
+        {/if}
+    {/if}
 
     <div class="flex row align-center just-end buttons">
         {#if current}
@@ -157,14 +185,30 @@
                     <button on:click={sendLamdenApproval}>Create Linked Account</button>
                 {/if}
                 
-                {#if $lamden_vk && current}
+                {#if $lamden_vk && current && !$isTrackedAddress}
                     {#if tokenFromMe}
-                        <button class:success={ hasEnoughTokens } disabled={!hasEnoughTokens} on:click={handleNextStep}>{hasEnoughTokens ? "Next Step" : "Insufficient Balance"}</button>
+                        <button class:success={ hasEnoughTokens } disabled={!hasEnoughTokens && !resuming } on:click={handleNextStep}>
+                            {resuming ? "Resume Swap" : "Start New Swap"}
+                        </button>
+                        {#if !resuming}
+                            <button disabled={$swapInfo.tokenAmount ? $swapInfo.tokenAmount.isGreaterThan(0) ? false : true : true} on:click={handleResumeSwap}>
+                                Resume Swap
+                            </button>
+                        {/if}
                     {:else}
                         <button class="success" on:click={handleNextStep}>Next Step</button>
                     {/if}
-                {/if} 
+                {/if}
+                {#if $lamden_vk && $isTrackedAddress}
+                    <p class="text-warning">
+                        The Lamden Wallet provided the address value of "tracked_addess".  
+                        This is because you have selected a watched account from your Dapp connection settings.  
+                        Please selected a different account in your Lamden Wallet Dapp settings.
+                    </p>
+                    <button  disabled>Unsupported Account</button>
+                {/if}
             {/if}
         {/if}
+        
     </div>
 {/if}

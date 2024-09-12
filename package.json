@@ -1,12 +1,17 @@
 {
   "name": "svelte-app",
-  "version": "1.0.0",
+  "version": "1.9.0",
   "private": true,
   "scripts": {
     "build": "rollup -c",
-    "dev": "HOST=0.0.0.0 rollup -c -w -s",
+    "dev": "HOST=localhost PORT=5005 rollup -c -w",
     "start": "sirv public --no-clear -s",
-    "check": "svelte-check --tsconfig ./tsconfig.json"
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "preinstall": "npx npm-force-resolutions"
+  },
+  "overrides": {
+    "chokidar": "3.5.3",
+    "glob-parent": "6.0.2"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0",
@@ -32,6 +37,7 @@
     "rollup-plugin-terser": "^7.0.0",
     "svelte": "^3.17.3",
     "svelte-check": "^1.0.46",
+    "svelte-loading-spinners": "^0.1.7",
     "svelte-preprocess": "^4.3.0",
     "tslib": "^2.0.1",
     "typescript": "^4.0.3"
@@ -42,8 +48,8 @@
     "compression": "^1.7.1",
     "crypto-js": "^4.0.0",
     "dotenv": "^9.0.2",
-    "lamden_wallet_controller": "^0.6.3",
-    "lamden-js": "^1.6.1",
+    "lamden_wallet_controller": "^0.7.2",
+    "lamden-js": "^3.8.0",
     "netlify-lambda": "^2.0.6",
     "sirv": "^1.0.0",
     "sirv-cli": "^1.0.0",

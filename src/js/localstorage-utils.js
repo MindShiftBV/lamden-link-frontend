@@ -1,6 +1,6 @@
 import { swapInfo, swapHistory  } from '../stores/globalStores'
 import { get } from "svelte/store";
-import BN from 'bignumber.js'
+import { BN } from '../js/global-utils'
 
 export function saveSwap(){
     setLSValue("current_swap", get(swapInfo))
@@ -12,7 +12,8 @@ export function getLastSwap(){
         return null
     } else {
         value = JSON.parse(value)
-        value.tokenAmount = new BN(value.tokenAmount)
+        let tokenAmount = new BN(value.tokenAmount)
+        if (!tokenAmount.isNaN()) value.tokenAmount = tokenAmount
         return value
     }
 }
